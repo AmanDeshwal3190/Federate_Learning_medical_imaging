@@ -37,8 +37,8 @@ The system consists of three main components:
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-repo/federated_medical_imaging.git
-   cd federated_medical_imaging
+   git clone https://github.com/shrikantyadav870/Federate_Learning.git
+   cd Federate_Learning
    ```
 
 2. **Create a Virtual Environment**
