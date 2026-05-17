@@ -1,0 +1,75 @@
+dataset:
+  name: "BraTS2020_Figshare"
+  brats_path: "data/raw/brain_tumor/BraTS2020_h5"
+  figshare_path: "data/brain_tumor/raw/Figshare"
+  processed_path: "data/brain_tumor/processed"
+  splits_path: "data/brain_tumor/splits"
+  image_size: [240, 240, 155]       # BraTS2020 standard dimensions
+  modalities: ["t1", "t1ce", "t2", "flair"]
+  num_classes: 4                     # Background, NCR/NET, ED, ET
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+
+preprocessing:
+  gaussian_kernel_size: 5
+  gaussian_sigma: 1.0
+  agsw_window_size: 7
+  guided_filter_radius: 8
+  guided_filter_eps: 0.01
+  clahe_clip_limit: 2.0
+  clahe_grid_size: [8, 8]
+  normalize: true
+  intensity_range: [0.0, 1.0]
+
+augmentation:
+  rotation_range: 15
+  horizontal_flip: true
+  vertical_flip: false
+  zoom_range: [0.9, 1.1]
+  brightness_range: [0.9, 1.1]
+  elastic_transform: false
+
+model:
+  segmentation:
+    architecture: "UNet3D"
+    encoder: "SE-ResNet101"
+    input_shape: [128, 128, 128, 4]  # Cropped volume with 4 modalities
+    num_filters: [32, 64, 128, 256, 512]
+    dropout_rate: 0.3
+    batch_norm: true
+  
+  feature_extraction:
+    architecture: "DenseNet121"
+    pretrained: true
+    
+  classification:
+    method: "ensemble_voting"
+    classifiers:
+      - name: "RandomForest"
+        n_estimators: 200
+        max_depth: 20
+        random_state: 42
+      - name: "SVM"
+        kernel: "rbf"
+        C: 10.0
+        gamma: "scale"
+      - name: "KNN"
+        n_neighbors: 7
+        weights: "distance"
+    voting: "soft"
+    cv_folds: 5
+
+training:
+  batch_size: 4
+  epochs: 60
+  learning_rate: 0.001
+  optimizer: "adam"
+  loss: "dice_loss"
+  early_stopping_patience: 10
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+  checkpoint_dir: "results/checkpoints/brain_tumor"
+
+evaluation:
+  metrics: ["dice_score", "accuracy", "sensitivity", "specificity", "precision", "recall", "f1_score"]

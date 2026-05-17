@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroScan AI — Federated Medical Imaging Diagnostics</title>
+    <meta name="description" content="AI-powered brain disease detection using federated learning. Upload brain MRI scans for Alzheimer's and Brain Tumor analysis.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    
+    <!-- External Libs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <!-- ═══════════ HEADER ═══════════ -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <h1>NeuroScan AI</h1>
+        </div>
+        <nav class="header-nav">
+            <button class="nav-tab active" data-tab="clinical" id="tab-clinical">🔬 Clinical Analysis</button>
+            <button class="nav-tab" data-tab="monitoring" id="tab-monitoring">📊 FL Monitoring</button>
+        </nav>
+        <div class="status-indicator">
+            <span class="status-dot tooltip" id="connection-status"></span>
+            <span id="header-status-text">Connecting...</span>
+        </div>
+    </header>
+
+    <!-- ═══════════ TAB 1: CLINICAL ANALYSIS ═══════════ -->
+    <div class="tab-content active" id="view-clinical">
+        <div class="clinical-container">
+
+            <!-- ── Left: Input Panel ── -->
+            <div class="input-panel glass-panel" id="input-panel">
+                <div class="panel-title">
+                    <span class="icon">🏥</span> Patient Scan Input
+                </div>
+
+                <!-- Hospital Name -->
+                <div class="form-group">
+                    <label class="form-label" for="hospital-name">Hospital / Client Name</label>
+                    <input type="text" class="form-input" id="hospital-name" 
+                           placeholder="e.g. Apollo Hospital, Client_01..." autocomplete="off">
+                </div>
+
+                <!-- Disease Choice -->
+                <div class="form-group">
+                    <label class="form-label">Disease Type</label>
+                    <div class="disease-toggle" id="disease-toggle">
+                        <button class="disease-option selected" data-disease="alzheimer" id="opt-alzheimer">
+                            <span class="disease-icon">🧠</span>
+                            Alzheimer's
+                        </button>
+                        <button class="disease-option" data-disease="brain_tumor" id="opt-brain-tumor">
+                            <span class="disease-icon">🔬</span>
+                            Brain Tumor
+                        </button>
+                    </div>
+                </div>
+
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label class="form-label">Upload Scan</label>
+                    <div class="upload-zone" id="upload-zone">
+                        <span class="upload-icon">📁</span>
+                        <div class="upload-text">
+                            <strong>Click to upload</strong> or drag & drop
+                        </div>
+                        <div class="upload-formats">
+                            Supports: JPG, PNG, DICOM, NIfTI, BMP, TIFF
+                        </div>
+                        <img class="upload-preview-mini" id="upload-preview-mini" alt="Preview">
+                    </div>
+                    <input type="file" id="file-input" accept="image/*,.dcm,.nii,.nii.gz,.h5" hidden>
+                </div>
+
+                <!-- File Info -->
+                <div class="file-info" id="file-info">
+                    <span>📎</span>
+                    <span class="file-name" id="file-name-display">filename.png</span>
+                    <span class="file-remove" id="file-remove" title="Remove file">✕</span>
+                </div>
+
+                <!-- Analyze Button -->
+                <button class="btn-analyze" id="btn-analyze" disabled>
+                    <span class="spinner-small"></span>
+                    <span class="btn-text">🔍 Analyze Scan</span>
+                </button>
+            </div>
+
+            <!-- ── Center: Image Preview ── -->
+            <div class="preview-section glass-panel" id="preview-section">
+                <div class="preview-header">
+                    <div class="preview-title">
+                        <span>🖼️</span> Uploaded Scan Preview
+                    </div>
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoom-in" title="Zoom In">+</button>
+                        <button class="zoom-btn" id="zoom-out" title="Zoom Out">−</button>
+                        <button class="zoom-btn" id="zoom-reset" title="Reset Zoom">⟲</button>
+                        <button class="zoom-btn" id="zoom-fit" title="Fit to View">⊞</button>
+                    </div>
+                </div>
+                <div class="image-viewer" id="image-viewer">
+                    <div class="placeholder-msg" id="viewer-placeholder">
+                        <span class="placeholder-icon">🧠</span>
+                        <span>Upload a brain scan to preview it here</span>
+                        <span style="font-size: 0.8rem; color: var(--text-dim);">Use scroll wheel to zoom, click & drag to pan</span>
+                    </div>
+                    <img class="viewer-image" id="viewer-image" alt="Brain MRI Scan" draggable="false">
+                    <span class="zoom-level-badge" id="zoom-level" style="display:none;">100%</span>
+                    <div class="processing-overlay" id="viewer-processing">
+                        <div class="spinner"></div>
+                        <span class="processing-text">Analyzing scan...</span>
+                    </div>
+                </div>
+                <div class="image-meta" id="image-meta" style="display:none;">
+                    <span>📐 <span id="meta-dimensions">-</span></span>
+                    <span>📄 <span id="meta-format">-</span></span>
+                    <span>💾 <span id="meta-size">-</span></span>
+                    <span>🏥 <span id="meta-hospital">-</span></span>
+                </div>
+            </div>
+
+            <!-- ── Bottom: Database Match Gallery ── -->
+            <div class="match-section glass-panel" id="match-section">
+                <div class="match-header">
+                    <div class="preview-title">
+                        <span>🔎</span> Database Matches
+                    </div>
+                </div>
+                <div class="carousel-container" id="carousel-container">
+                    <div class="match-empty" id="match-empty">
+                        <span class="match-empty-icon">🗂️</span>
+                        <span>Matching results will appear after analysis</span>
+                    </div>
+                    <div class="carousel-track" id="carousel-track" style="display:none;"></div>
+                    <button class="carousel-nav prev" id="carousel-prev" style="display:none;">‹</button>
+                    <button class="carousel-nav next" id="carousel-next" style="display:none;">›</button>
+                </div>
+                <div class="carousel-dots" id="carousel-dots"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ TAB 2: FL MONITORING (existing dashboard) ═══════════ -->
+    <div class="tab-content" id="view-monitoring">
+        <main class="dashboard-container">
+            <!-- Stats Row -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Current Round</div>
+                    <div class="stat-value"><span id="stat-current-round">0</span><span class="stat-muted">/<span id="stat-total-rounds">0</span></span></div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Global Accuracy</div>
+                    <div class="stat-value" id="stat-global-acc">0.0%</div>
+                    <div class="stat-trend" id="stat-acc-trend">Waiting for data...</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Active Clients</div>
+                    <div class="stat-value"><span id="stat-active-clients">0</span></div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-title">Best Accuracy</div>
+                    <div class="stat-value" id="stat-best-acc">0.0%</div>
+                    <div class="stat-muted" style="margin-top: 5px;">Round <span id="stat-best-acc-round">0</span></div>
+                </div>
+            </section>
+
+            <!-- Charts Row -->
+            <section class="charts-row">
+                <div class="chart-container glass-panel">
+                    <div class="chart-header"><h2>Model Accuracy</h2></div>
+                    <div class="chart-wrapper"><canvas id="accuracyChart"></canvas></div>
+                    <div class="loading-overlay" id="acc-loading"><div class="spinner"></div></div>
+                </div>
+                
+                <div class="chart-container glass-panel">
+                    <div class="chart-header"><h2>Model Loss</h2></div>
+                    <div class="chart-wrapper"><canvas id="lossChart"></canvas></div>
+                    <div class="loading-overlay" id="loss-loading"><div class="spinner"></div></div>
+                </div>
+            </section>
+
+            <!-- Lower Section -->
+            <section class="lower-grid">
+                <div class="table-container glass-panel">
+                    <div class="panel-header"><h2>Connected Hospitals (Clients)</h2></div>
+                    <div class="table-responsive">
+                        <table class="client-table">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Hospital / Client ID</th>
+                                    <th>Samples</th>
+                                    <th>Current Accuracy</th>
+                                    <th>Current Loss</th>
+                                    <th>Last Update</th>
+                                </tr>
+                            </thead>
+                            <tbody id="client-table-body">
+                                <tr class="empty-row"><td colspan="6">Waiting for client data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="comparison-container glass-panel">
+                    <div class="panel-header"><h2>Federated vs Centralized</h2></div>
+                    <div class="chart-wrapper"><canvas id="comparisonChart"></canvas></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ═══════════ ANALYSIS MODAL OVERLAY ═══════════ -->
+    <div class="modal-backdrop" id="analysis-modal-backdrop">
+        <div class="analysis-modal" id="analysis-modal">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🔬</span> AI Disease Detection Results
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn" id="modal-zoom-in">🔍 Zoom</button>
+                    <button class="modal-btn" id="modal-zoom-out">🔎 Zoom Out</button>
+                    <button class="modal-btn close-btn" id="modal-close" title="Close">✕</button>
+                </div>
+            </div>
+            <div class="modal-image-area" id="modal-image-area">
+                <div class="modal-image-container" id="modal-image-container">
+                    <img class="modal-image" id="modal-image" alt="Annotated brain scan" draggable="false">
+                    <!-- Annotation markers will be dynamically injected here -->
+                </div>
+            </div>
+            <div class="modal-regions-panel">
+                <div class="regions-header">
+                    <h3>🧬 Affected Brain Regions</h3>
+                    <div class="regions-subtitle" id="diagnosis-subtitle">Analysis pending...</div>
+                </div>
+                <div class="regions-list" id="regions-list">
+                    <!-- Region cards injected by JS -->
+                </div>
+                <div class="modal-summary" id="modal-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">Diagnosis</span>
+                        <span class="summary-value" id="summary-diagnosis">—</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Confidence</span>
+                        <span class="summary-value confidence" id="summary-confidence">—</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Detection</span>
+                        <span class="summary-value" id="summary-detection">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>NeuroScan AI — Federated Medical Imaging Pipeline &bull; <span id="model-info-text">Model: Loading...</span></p>
+    </footer>
+
+    <!-- Main JS -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

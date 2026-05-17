@@ -1,0 +1,83 @@
+dataset:
+  name: "ADNI_OASIS"
+  adni_path: "data/alzheimer/raw/ADNI"
+  oasis_path: "data/alzheimer/raw/OASIS"
+  processed_path: "data/alzheimer/processed"
+  splits_path: "data/alzheimer/splits"
+  
+  adni:
+    num_subjects: 200
+    ad_subjects: 100
+    hc_subjects: 100
+    scanner: "3T"
+    voxel_size: [1.0, 1.0, 1.0]
+    original_dimensions: [176, 240, 256]
+    final_dimensions: [182, 218, 182]
+    template: "MNI152_1mm"
+    
+  oasis:
+    num_subjects: 200
+    ad_subjects: 100
+    hc_subjects: 100
+    scanner: "1.5T_Siemens"
+    voxel_size: [1.0, 1.0, 1.0]
+    original_dimensions: [256, 256, 128]
+    final_dimensions: [176, 208, 176]
+
+preprocessing:
+  skull_stripping: true
+  coregistration: true
+  coregistration_method: "SyN"
+  normalization: "z_score"
+  brain_masking: true
+  resampling: true
+  target_voxel_size: [1.0, 1.0, 1.0]
+
+model:
+  architecture: "VGG3D"
+  input_shape_adni: [182, 218, 182, 1]
+  input_shape_oasis: [176, 208, 176, 1]
+  conv_blocks:
+    - name: "block1"
+      num_conv_layers: 2
+      filters: 64
+      kernel_size: [3, 3, 3]
+      activation: "relu"
+      pool_size: [2, 2, 2]
+    - name: "block2"
+      num_conv_layers: 2
+      filters: 128  
+      kernel_size: [3, 3, 3]
+      activation: "relu"
+      pool_size: [2, 2, 2]
+    - name: "block3"
+      num_conv_layers: 3
+      filters: 256
+      kernel_size: [3, 3, 3]
+      activation: "relu"
+      pool_size: [2, 2, 2]
+    - name: "block4"
+      num_conv_layers: 3
+      filters: 512
+      kernel_size: [3, 3, 3]
+      activation: "relu"
+      pool_size: [2, 2, 2]
+  
+  dropout_rate: 0.5
+  fc_layers: [128, 64, 2]
+  output_activation: "softmax"
+
+training:
+  batch_size: 2
+  epochs: 200
+  learning_rate: 0.0001
+  optimizer: "adam"
+  loss: "binary_crossentropy"
+  cv_folds: 5
+  early_stopping_patience: 20
+  checkpoint_dir: "results/checkpoints/alzheimer"
+
+evaluation:
+  metrics: ["accuracy", "sensitivity", "specificity", "precision", "recall", "f1_score", "roc_auc"]
+  target_accuracy_adni: 0.734
+  target_accuracy_oasis: 0.699

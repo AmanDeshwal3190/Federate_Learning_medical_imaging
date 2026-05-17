@@ -1,0 +1,44 @@
+server:
+  address: "0.0.0.0:8080"
+  num_rounds: 20
+  min_fit_clients: 2
+  min_evaluate_clients: 2
+  min_available_clients: 2
+  
+strategy:
+  name: "FedAvg"
+  fraction_fit: 1.0
+  fraction_evaluate: 1.0
+  
+  fedprox:
+    enabled: false
+    proximal_mu: 0.01
+
+  secure_aggregation:
+    enabled: false
+
+clients:
+  num_clients: 3
+  data_distribution: "iid"
+  
+  hospital_simulation:
+    - name: "Hospital_A"
+      data_fraction: 0.4
+      disease: "brain_tumor"
+    - name: "Hospital_B"  
+      data_fraction: 0.3
+      disease: "brain_tumor"
+    - name: "Hospital_C"
+      data_fraction: 0.3
+      disease: "alzheimer"
+
+communication:
+  max_message_size: 536870912   # 512 MB
+  timeout: 300                    # 5 minutes
+  
+logging:
+  log_dir: "results/logs/federated"
+  log_level: "INFO"
+  save_metrics_per_round: true
+  save_model_per_round: false
+  save_model_final: true

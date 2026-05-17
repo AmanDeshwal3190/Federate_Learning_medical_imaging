@@ -1,0 +1,100 @@
+# ===========================
+# Python
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# ===========================
+# Virtual Environment
+# ===========================
+.venv/
+venv/
+env/
+ENV/
+
+# ===========================
+# IDE / Editor
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===========================
+# Pytest / Testing
+# ===========================
+.pytest_cache/
+htmlcov/
+.coverage
+*.cover
+
+# ===========================
+# Datasets (too large for GitHub)
+# ===========================
+datatosetforfrture/
+federated_medical_imaging/data/raw/
+federated_medical_imaging/data/processed/
+federated_medical_imaging/data/brain_tumor/raw/
+federated_medical_imaging/data/alzheimer/raw/
+federated_medical_imaging/data/brain_tumor/processed/
+federated_medical_imaging/data/alzheimer/processed/
+
+# ===========================
+# Model Weights & Binaries
+# ===========================
+*.h5
+*.hdf5
+*.nii
+*.nii.gz
+*.pkl
+*.npy
+*.npz
+*.onnx
+*.pb
+*.pt
+*.pth
+
+# ===========================
+# Uploaded / Generated Images
+# ===========================
+federated_medical_imaging/dashboard/static/uploads/
+
+# ===========================
+# Results (logs, checkpoints)
+# ===========================
+results/
+federated_medical_imaging/results/checkpoints/
+federated_medical_imaging/results/logs/
+federated_medical_imaging/results/plots/
+
+# ===========================
+# Logs
+# ===========================
+*.log
+
+# ===========================
+# Environment & Secrets
+# ===========================
+.env
+.env.local
+*.key
+*.pem
+
+# ===========================
+# Misc
+# ===========================
+*.csv
+*.zip
+*.tar.gz
+*.rar
