@@ -1,31 +1,29 @@
 import streamlit as st
+from PIL import Image
 
 st.set_page_config(page_title="Federated Learning", layout="wide")
 
 st.title("Federated Learning for Medical Imaging")
 
-st.write("""
-This project demonstrates a federated learning framework for medical image analysis using deep learning models.
-""")
+st.write("AI-powered medical imaging analysis system.")
+
+uploaded_file = st.file_uploader("Upload Medical Image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file:
+    image = Image.open(uploaded_file)
+
+    st.image(image, caption="Uploaded Image", use_container_width=True)
+
+    st.success("Image uploaded successfully")
+
+    st.subheader("Prediction")
+    st.write("Sample Prediction: Normal Scan")
 
 st.header("Project Features")
 
 st.markdown("""
-- Federated Learning Architecture
+- Federated Learning
 - Medical Image Processing
-- Flask Dashboard
 - Deep Learning Integration
 - Distributed Training
 """)
-
-st.header("Technologies Used")
-
-st.markdown("""
-- Python
-- TensorFlow
-- Flask
-- Streamlit
-- NumPy
-""")
-
-st.success("Project deployed successfully 🚀")
