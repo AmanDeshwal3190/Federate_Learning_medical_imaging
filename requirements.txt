@@ -1,4 +1,2 @@
 streamlit
-tensorflow
-flask
 numpy
